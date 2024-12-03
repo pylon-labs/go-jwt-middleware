@@ -26,3 +26,10 @@ func WithCustomClaims(f func() CustomClaims) Option {
 		v.customClaims = f
 	}
 }
+
+// WithAlternateIssuers sets alternate issuers for the token.
+func WithAlternateIssuers(issuers ...string) Option {
+	return func(v *Validator) {
+		v.alternateIssuers = issuers
+	}
+}

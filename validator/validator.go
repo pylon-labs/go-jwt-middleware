@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"gopkg.in/go-jose/go-jose.v2/jwt"
@@ -33,6 +34,7 @@ type Validator struct {
 	expectedClaims     jwt.Expected                               // Internal.
 	customClaims       func() CustomClaims                        // Optional.
 	allowedClockSkew   time.Duration                              // Optional.
+	alternateIssuers   []string                                   // Optional.
 }
 
 // SignatureAlgorithm is a signature algorithm.
@@ -108,7 +110,7 @@ func (v *Validator) ValidateToken(ctx context.Context, tokenString string) (inte
 		return nil, fmt.Errorf("failed to deserialize token claims: %w", err)
 	}
 
-	if err = validateClaimsWithLeeway(registeredClaims, v.expectedClaims, v.allowedClockSkew); err != nil {
+	if err = validateClaimsWithLeeway(registeredClaims, v.expectedClaims, v.allowedClockSkew, v.alternateIssuers); err != nil {
 		return nil, fmt.Errorf("expected claims not validated: %w", err)
 	}
 
@@ -134,11 +136,11 @@ func (v *Validator) ValidateToken(ctx context.Context, tokenString string) (inte
 	return validatedClaims, nil
 }
 
-func validateClaimsWithLeeway(actualClaims jwt.Claims, expected jwt.Expected, leeway time.Duration) error {
+func validateClaimsWithLeeway(actualClaims jwt.Claims, expected jwt.Expected, leeway time.Duration, alternateIssuers []string) error {
 	expectedClaims := expected
 	expectedClaims.Time = time.Now()
 
-	if actualClaims.Issuer != expectedClaims.Issuer {
+	if actualClaims.Issuer != expectedClaims.Issuer && !slices.Contains(alternateIssuers, actualClaims.Issuer) {
 		return jwt.ErrInvalidIssuer
 	}
 
