@@ -1,4 +1,4 @@
-module github.com/auth0/go-jwt-middleware/v2
+module github.com/pylon-labs/go-jwt-middleware/v2
 
 go 1.22
 
